@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Undertale vs Gojo: The Honored One</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Retro Arcade Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #030303;
+            color: #ffffff;
+            font-family: 'Press Start 2P', monospace;
+            user-select: none;
+            overflow: hidden;
+        }
+
+        /* CRT Filter Effect */
+        .crt::before {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.04), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.04));
+            z-index: 100;
+            background-size: 100% 3px, 6px 100%;
+            pointer-events: none;
+        }
+
+        /* Pixel borders & Undertale Aesthetic */
+        .ut-box {
+            border: 4px solid #ffffff;
+            box-shadow: 0 0 0 2px #000000;
+            background-color: #000000;
+        }
+
+        .ut-btn {
+            border: 3px solid #ff9900;
+            color: #ff9900;
+            background-color: #000000;
+            font-family: 'Press Start 2P', monospace;
+            transition: all 0.1s ease;
+        }
+
+        .ut-btn:hover, .ut-btn.selected {
+            background-color: #ff9900;
+            color: #000000;
+            box-shadow: inset 0 0 0 2px #ffffff;
+        }
+
+        .ut-btn-yellow {
+            border-color: #ffff00;
+            color: #ffff00;
+        }
+
+        .ut-btn-yellow:hover, .ut-btn-yellow.selected {
+            background-color: #ffff00;
+            color: #000000;
+        }
+
+        /* Heart Soul CSS */
+        .heart-soul {
+            width: 14px;
+            height: 14px;
+            background-color: #ff0000;
+            clip-path: polygon(50% 0%, 100% 35%, 80% 100%, 50% 80%, 20% 100%, 0% 35%);
+            display: inline-block;
+        }
+
+        /* Damage Shake */
+        @keyframes shake {
+            0% { transform: translate(3px, 3px) rotate(0deg); }
+            20% { transform: translate(-3px, -2px) rotate(-1deg); }
+            40% { transform: translate(-3px, 1px) rotate(1deg); }
+            60% { transform: translate(3px, 2px) rotate(0deg); }
+            80% { transform: translate(1px, -2px) rotate(1deg); }
+            100% { transform: translate(0px, 0px) rotate(0deg); }
+        }
+
+        .shake {
+            animation: shake 0.3s ease-in-out;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #000;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #fff;
+        }
+    </style>
+</head>
+<body class="h-screen w-screen flex flex-col items-center justify-center p-2 sm:p-4">
+
+    <!-- MAIN GAME CONTAINER -->
+    <div id="game-container" class="w-full max-w-3xl h-[650px] flex flex-col justify-between ut-box p-3 relative overflow-hidden crt">
+        
+        <!-- TOP SECTION: GOJO ENEMY CANVAS & BOSS STATUS -->
+        <div class="relative w-full h-56 flex flex-col items-center justify-center overflow-hidden border-b-2 border-dashed border-gray-800">
+            <!-- Background Stars / Infinite Void Canvas -->
+            <canvas id="bg-canvas" class="absolute inset-0 w-full h-full z-0"></canvas>
+            
+            <!-- Gojo Interactive Canvas Sprite -->
+            <canvas id="gojo-canvas" class="relative z-10 cursor-pointer"></canvas>
+
+            <!-- Enemy Health & Phase Status -->
+            <div class="absolute top-2 left-2 z-20 text-xs text-gray-400 flex flex-col gap-1">
+                <div class="flex items-center gap-2">
+                    <span class="text-white font-bold tracking-widest text-xs sm:text-sm" id="enemy-name">GOJO SATORU</span>
+                    <span id="phase-badge" class="px-2 py-0.5 text-[9px] bg-blue-950 border border-blue-400 text-blue-200 rounded">PHASE 1</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="w-40 h-3 bg-red-950 border border-white relative overflow-hidden">
+                        <div id="enemy-hp-bar" class="h-full bg-cyan-400 w-full transition-all duration-300"></div>
+                    </div>
+                    <span id="enemy-hp-text" class="text-[10px] font-mono">100%</span>
+                </div>
+                <!-- Infinity Status Indicator -->
+                <div id="infinity-status" class="text-[9px] text-cyan-300 font-mono tracking-wider flex items-center gap-1">
+                    <span>LIMITLESS INFINITY:</span> <span id="infinity-state" class="text-green-400 font-bold">ACTIVE (90% DEF)</span>
+                </div>
+            </div>
+
+            <!-- Spare Mercy Indicator -->
+            <div class="absolute top-2 right-2 z-20 text-xs text-yellow-400 flex flex-col items-end">
+                <span class="text-[10px] tracking-wider">RESPECT / MERCY</span>
+                <div class="w-28 h-2 bg-gray-900 border border-yellow-400 mt-1 overflow-hidden">
+                    <div id="mercy-bar" class="h-full bg-yellow-400 w-0 transition-all duration-300"></div>
+                </div>
+            </div>
+
+            <!-- BGM Audio Toggle Button -->
+            <button id="btn-audio-toggle" class="absolute bottom-2 left-2 z-20 text-[10px] px-2 py-1 bg-gray-900 border border-gray-600 text-gray-300 hover:text-white rounded flex items-center gap-1">
+                <span id="audio-icon">🎵</span> BGM: <span id="audio-status" class="text-yellow-400">ON</span>
+            </button>
+            
+            <!-- Speech Bubble Above Gojo -->
+            <div id="speech-bubble" class="absolute bottom-3 right-6 bg-white text-black p-2.5 rounded-lg text-xs max-w-[240px] border-2 border-black hidden z-30 font-sans font-semibold shadow-lg">
+                <span id="speech-text">Nah, I'd win.</span>
+            </div>
+        </div>
+
+        <!-- MIDDLE SECTION: MAIN DISPLAY BOX (TEXT / MENU / FIGHT / DODGE ARENA) -->
+        <div id="main-display" class="relative w-full h-56 ut-box p-3 my-1.5 flex flex-col justify-between overflow-hidden">
+            
+            <!-- MODE 1: Dialogue & Text Box -->
+            <div id="text-mode" class="w-full h-full flex flex-col justify-between">
+                <div id="typewriter-text" class="text-xs sm:text-sm leading-relaxed tracking-wider text-white whitespace-pre-line">
+                    * Gojo Satoru floats gracefully in front of you.
+                    * The air chills with immense Cursed Energy.
+                </div>
+                <div id="text-prompt" class="text-[10px] text-yellow-400 self-end animate-pulse hidden">
+                    [Press Z or CLICK to continue]
+                </div>
+            </div>
+
+            <!-- MODE 2: Action Sub-Menu -->
+            <div id="menu-mode" class="w-full h-full hidden grid grid-cols-2 gap-2.5 p-1 text-xs">
+                <!-- Dynamic choices injected by JS -->
+            </div>
+
+            <!-- MODE 3: Timing Attack Bar (FIGHT action) -->
+            <div id="fight-mode" class="w-full h-full hidden flex flex-col items-center justify-center relative bg-black">
+                <div class="text-[11px] text-yellow-400 mb-2 tracking-widest font-mono">PRESS [Z] OR CLICK AT CENTER TO STRIKE!</div>
+                <div class="w-4/5 h-10 border-4 border-white relative overflow-hidden bg-gray-900 rounded-sm">
+                    <!-- Target Sweet Spot (Critical & Good Zones) -->
+                    <div class="absolute top-0 bottom-0 left-[35%] right-[35%] bg-blue-900 border-x border-blue-400 opacity-60"></div>
+                    <div class="absolute top-0 bottom-0 left-[44%] right-[44%] bg-green-500 opacity-90 border-x-2 border-white"></div>
+                    <div class="absolute top-0 bottom-0 left-[48.5%] right-[48.5%] bg-yellow-300"></div>
+                    <!-- Moving Cursor -->
+                    <div id="attack-cursor" class="absolute top-0 bottom-0 w-2.5 bg-white shadow-[0_0_12px_#fff]"></div>
+                </div>
+                <div id="attack-tip" class="mt-2 text-[10px] text-gray-400 font-mono">HIT WITHIN THE COLOURED ZONE OR YOUR ATTACK WILL MISS!</div>
+            </div>
+
+            <!-- MODE 4: Soul Bullet Hell Dodge Arena -->
+            <div id="dodge-mode" class="w-full h-full hidden flex flex-col items-center justify-center relative">
+                <!-- Dodge Box Mechanics Legend -->
+                <div class="absolute top-1 left-2 flex gap-3 text-[9px] text-gray-400 z-20">
+                    <span class="text-cyan-300 font-bold">■ CYAN: STILL</span>
+                    <span class="text-orange-400 font-bold">■ ORANGE: MOVE</span>
+                    <span class="text-blue-400 font-bold">● BLUE: PULL</span>
+                    <span class="text-red-500 font-bold">● RED: BLAST</span>
+                </div>
+                <!-- Bounding Box Arena -->
+                <div id="dodge-box" class="relative w-80 h-44 border-4 border-white bg-black overflow-hidden shadow-[0_0_20px_rgba(56,189,248,0.2)] transition-all duration-300">
+                    <!-- Red Soul Heart -->
+                    <div id="player-soul" class="heart-soul absolute transform -translate-x-1/2 -translate-y-1/2" style="left: 160px; top: 88px;"></div>
+                    <!-- Bullet Canvas Overlay -->
+                    <canvas id="bullet-canvas" class="absolute inset-0 w-full h-full pointer-events-none"></canvas>
+                </div>
+                <!-- On-screen Touch D-Pad for Mobile Users -->
+                <div class="absolute bottom-1 right-2 grid grid-cols-3 gap-1 opacity-70 sm:hidden z-30">
+                    <div></div>
+                    <button id="btn-up" class="w-8 h-8 bg-gray-800 border border-white text-xs text-white rounded">▲</button>
+                    <div></div>
+                    <button id="btn-left" class="w-8 h-8 bg-gray-800 border border-white text-xs text-white rounded">◄</button>
+                    <button id="btn-down" class="w-8 h-8 bg-gray-800 border border-white text-xs text-white rounded">▼</button>
+                    <button id="btn-right" class="w-8 h-8 bg-gray-800 border border-white text-xs text-white rounded">►</button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- BOTTOM SECTION: PLAYER STATS & ACTION BUTTONS -->
+        <div class="w-full flex flex-col gap-1.5">
+            <!-- Player Status Bar -->
+            <div class="flex items-center justify-between text-xs px-1 font-mono">
+                <div class="flex items-center gap-3">
+                    <span class="text-white font-bold tracking-widest">FRISK / ECHO</span>
+                    <span class="text-gray-400 text-[11px]">LV <span id="player-lv">19</span></span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="text-[11px] text-yellow-400 font-bold">HP</span>
+                    <!-- Health Bar -->
+                    <div class="w-44 h-4 bg-red-900 border border-white relative overflow-hidden">
+                        <div id="player-hp-bar" class="h-full bg-yellow-400 w-full transition-all duration-200"></div>
+                    </div>
+                    <span id="player-hp-text" class="text-xs font-mono font-bold">92 / 92</span>
+                </div>
+            </div>
+
+            <!-- Action Buttons Row -->
+            <div class="grid grid-cols-4 gap-2 sm:gap-4 mt-1">
+                <button id="btn-fight" class="ut-btn py-2 sm:py-2.5 text-xs sm:text-sm flex items-center justify-center gap-2">
+                    <span class="heart-soul hidden"></span> FIGHT
+                </button>
+                <button id="btn-act" class="ut-btn py-2 sm:py-2.5 text-xs sm:text-sm flex items-center justify-center gap-2">
+                    <span class="heart-soul hidden"></span> ACT
+                </button>
+                <button id="btn-item" class="ut-btn py-2 sm:py-2.5 text-xs sm:text-sm flex items-center justify-center gap-2">
+                    <span class="heart-soul hidden"></span> ITEM
+                </button>
+                <button id="btn-mercy" class="ut-btn ut-btn-yellow py-2 sm:py-2.5 text-xs sm:text-sm flex items-center justify-center gap-2">
+                    <span class="heart-soul hidden"></span> MERCY
+                </button>
+            </div>
+        </div>
+
+        <!-- OVERLAY: GAME OVER / VICTORY SCREEN -->
+        <div id="overlay-screen" class="absolute inset-0 bg-black bg-opacity-95 z-50 flex flex-col items-center justify-center text-center p-6 hidden">
+            <h1 id="overlay-title" class="text-2xl sm:text-4xl text-yellow-400 mb-4 font-bold tracking-widest">GAME OVER</h1>
+            <p id="overlay-desc" class="text-xs sm:text-sm text-gray-300 max-w-md mb-8 leading-relaxed font-mono">
+                Your soul disintegrated inside the Infinite Void...
+            </p>
+            <button id="btn-restart" class="ut-btn px-6 py-3 text-sm text-white hover:border-yellow-400">
+                RETRY BATTLE
+            </button>
+        </div>
+
+    </div>
+
+    <!-- GAME LOGIC SCRIPT -->
+    <script>
+        /* ==========================================================================
+           1. GAME STATE & GOJO DATA
+           ========================================================================== */
+        const gameState = {
+            player: {
+                name: 'Frisk',
+                lv: 19,
+                hp: 92,
+                maxHp: 92,
+                atk: 30,
+                def: 10,
+                items: [
+                    { name: 'Sweet Mochi', heal: 40, desc: 'Gojo\'s favorite sweet. Heals 40 HP.' },
+                    { name: 'Cursed Pill', heal: 60, desc: 'Concentrated cursed energy. Restores 60 HP.' },
+                    { name: 'Sukuna Finger', heal: 30, desc: 'Bypasses Gojo\'s Infinity for 2 turns & heals 30 HP.' }
+                ]
+            },
+            gojo: {
+                name: 'Gojo Satoru',
+                hp: 500,
+                maxHp: 500,
+                phase: 1, // 1: Blindfolded, 2: Six Eyes Unveiled, 3: Domain Expansion
+                mercy: 0,
+                infinityActive: true,
+                bypassTurns: 0,
+                blindfoldOn: true
+            },
+            attackAnimFrame: null,
+            typewriterTimer: null,
+            bgmEnabled: true,
+            soulPos: { x: 160, y: 88 },
+            soulSpeed: 2.8,
+            keys: { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false, w: false, s: false, a: false, d: false },
+            activeBullets: []
+        };
+
+        const GOJO_ACTS = [
+            { name: 'Check', text: '* GOJO SATORU - ATK 99 DEF ∞.\n* The Honored One. Limitless Infinity blocks most attacks!' },
+            { name: 'Talk Strongest', text: '* You ask him if he is truly the strongest.\n* Gojo grins: "Throughout Heaven and Earth, I alone am the honored one!"\n* (Mercy +25%)', mercy: 25, quote: "Are you the strongest because you're Frisk?" },
+            { name: 'Analyze Infinity', text: '* You analyze the infinite space dividing your soul from Gojo.\n* You found a gap in his barrier! (Infinity bypassed for 2 turns)', bypass: 2, mercy: 20, quote: "Impressed? That's the Limitless." },
+            { name: 'Domain Counter', text: '* You concentrate your determination to withstand Infinite Void!\n* (Mercy +35% & Heals 15 HP)', mercy: 35, heal: 15, quote: "Domain Expansion: Infinite Void!" }
+        ];
+
+        /* ==========================================================================
+        const GOJO_MISS_QUOTES = [
+            "Better luck next time!",
+            "Is that all?",
+            "You didn't even scratch my Infinity.",
+            "Too slow!",
+            "My Infinity is completely effortless."
+        ];
+
+        /* ==========================================================================
+           2. RETRO AUDIO SYNTHESIZER (Web Audio API)
+           ========================================================================== */
+        class RetroAudio {
+            constructor() {
+                this.ctx = null;
+                this.bgmEnabled = true;
+                this.bgmInterval = null;
+                this.bgmStep = 0;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+
+            toggleBGM() {
+                this.bgmEnabled = !this.bgmEnabled;
+                if (!this.bgmEnabled) this.stopBGM();
+                else this.startBGM();
+                return this.bgmEnabled;
+            }
+
+            playTextBlip() {
+                if (!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(200 + Math.random() * 50, this.ctx.currentTime);
+                gain.gain.setValueAtTime(0.02, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.03);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.03);
+            }
+
+            playSelect() {
+                if (!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(440, this.ctx.currentTime);
+                osc.frequency.setValueAtTime(880, this.ctx.currentTime + 0.04);
+                gain.gain.setValueAtTime(0.05, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.08);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.08);
+            }
+
+            playHurt() {
+                if (!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(160, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(40, this.ctx.currentTime + 0.18);
+                gain.gain.setValueAtTime(0.12, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.18);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.18);
+            }
+
+            playHit(critical = false) {
+                if (!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(critical ? 580 : 340, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(80, this.ctx.currentTime + (critical ? 0.25 : 0.15));
+                gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + (critical ? 0.25 : 0.15));
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + (critical ? 0.25 : 0.15));
+            }
+
+            playHeal() {
+                if (!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                [261, 329, 392, 523, 659].forEach((freq, idx) => {
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime + idx * 0.04);
+                });
+                gain.gain.setValueAtTime(0.08, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.25);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.25);
+            }
+
+            playDomainSound() {
+                if (!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(100, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(800, this.ctx.currentTime + 0.6);
+                gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.6);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.6);
+            }
+
+            startBGM() {
+                if (!this.bgmEnabled || this.bgmInterval) return;
+                this.init();
+                const bassline = [110, 110, 146, 130, 110, 98, 130, 110];
+                const leadline = [440, 554, 659, 554, 740, 659, 554, 440];
+
+                this.bgmInterval = setInterval(() => {
+                    if (!this.ctx || !this.bgmEnabled) return;
+                    const time = this.ctx.currentTime;
+                    
+                    const bOsc = this.ctx.createOscillator();
+                    const bGain = this.ctx.createGain();
+                    bOsc.type = 'triangle';
+                    bOsc.frequency.setValueAtTime(bassline[this.bgmStep % bassline.length], time);
+                    bGain.gain.setValueAtTime(0.03, time);
+                    bGain.gain.exponentialRampToValueAtTime(0.001, time + 0.18);
+                    bOsc.connect(bGain);
+                    bGain.connect(this.ctx.destination);
+                    bOsc.start(time);
+                    bOsc.stop(time + 0.18);
+
+                    const lOsc = this.ctx.createOscillator();
+                    const lGain = this.ctx.createGain();
+                    lOsc.type = 'square';
+                    const tempoMult = gameState.gojo.phase === 3 ? 1.5 : (gameState.gojo.phase === 2 ? 1.25 : 1);
+                    lOsc.frequency.setValueAtTime(leadline[this.bgmStep % leadline.length] * tempoMult, time);
+                    lGain.gain.setValueAtTime(0.015, time);
+                    lGain.gain.exponentialRampToValueAtTime(0.001, time + 0.12);
+                    lOsc.connect(lGain);
+                    lGain.connect(this.ctx.destination);
+                    lOsc.start(time);
+                    lOsc.stop(time + 0.12);
+
+                    this.bgmStep++;
+                }, 150);
+            }
+
+            stopBGM() {
+                if (this.bgmInterval) {
+                    clearInterval(this.bgmInterval);
+                    this.bgmInterval = null;
+                }
+            }
+        }
+
+        const audio = new RetroAudio();
+
+        /* ==========================================================================
+           3. UI CONTROLS & DISPLAY MODES
+           ========================================================================== */
+        const textModeEl = document.getElementById('text-mode');
+        const menuModeEl = document.getElementById('menu-mode');
+        const fightModeEl = document.getElementById('fight-mode');
+        const dodgeModeEl = document.getElementById('dodge-mode');
+        const typewriterEl = document.getElementById('typewriter-text');
+        const textPromptEl = document.getElementById('text-prompt');
+        const attackCursorEl = document.getElementById('attack-cursor');
+        
+        const playerHpBar = document.getElementById('player-hp-bar');
+        const playerHpText = document.getElementById('player-hp-text');
+        const enemyHpBar = document.getElementById('enemy-hp-bar');
+        const enemyHpText = document.getElementById('enemy-hp-text');
+        const mercyBar = document.getElementById('mercy-bar');
+        const phaseBadge = document.getElementById('phase-badge');
+        const infinityState = document.getElementById('infinity-state');
+        
+        const speechBubble = document.getElementById('speech-bubble');
+        const speechText = document.getElementById('speech-text');
+        
+        const playerSoul = document.getElementById('player-soul');
+        const dodgeBox = document.getElementById('dodge-box');
+        const bulletCanvas = document.getElementById('bullet-canvas');
+        const bCtx = bulletCanvas.getContext('2d');
+        const overlayScreen = document.getElementById('overlay-screen');
+
+        const btnFight = document.getElementById('btn-fight');
+        const btnAct = document.getElementById('btn-act');
+        const btnItem = document.getElementById('btn-item');
+        const btnMercy = document.getElementById('btn-mercy');
+
+        document.getElementById('btn-audio-toggle').addEventListener('click', () => {
+            const isPlaying = audio.toggleBGM();
+            document.getElementById('audio-status').innerText = isPlaying ? 'ON' : 'OFF';
+        });
+
+        /* ==========================================================================
+           4. GOJO CANVAS SPRITE & BACKGROUND ANIMATION
+           ========================================================================== */
+        const gCanvas = document.getElementById('gojo-canvas');
+        const gCtx = gCanvas.getContext('2d');
+        const bgCanvas = document.getElementById('bg-canvas');
+        const bgCtx = bgCanvas.getContext('2d');
+        let animAngle = 0;
+
+        function initCanvases() {
+            gCanvas.width = 220;
+            gCanvas.height = 180;
+            bgCanvas.width = bgCanvas.offsetWidth;
+            bgCanvas.height = bgCanvas.offsetHeight;
+        }
+
+        function drawGojoSprite() {
+            gCtx.clearRect(0, 0, gCanvas.width, gCanvas.height);
+            animAngle += 0.04;
+            const cx = gCanvas.width / 2;
+            const cy = gCanvas.height / 2 + Math.sin(animAngle * 1.5) * 5;
+
+            // Draw Limitless Infinity Aura Ring
+            gCtx.save();
+            gCtx.translate(cx, cy);
+            
+            // Aura Particles
+            gCtx.strokeStyle = gameState.gojo.phase === 3 ? '#a855f7' : (gameState.gojo.phase === 2 ? '#38bdf8' : '#ffffff');
+            gCtx.lineWidth = 2;
+            gCtx.setLineDash([8, 6]);
+            gCtx.beginPath();
+            gCtx.arc(0, -10, 48 + Math.sin(animAngle * 2) * 4, 0, Math.PI * 2);
+            gCtx.stroke();
+            gCtx.restore();
+
+            // Hair (Spiky White)
+            gCtx.fillStyle = '#ffffff';
+            gCtx.beginPath();
+            gCtx.moveTo(cx - 30, cy - 30);
+            gCtx.lineTo(cx - 20, cy - 55);
+            gCtx.lineTo(cx - 10, cy - 45);
+            gCtx.lineTo(cx, cy - 60);
+            gCtx.lineTo(cx + 10, cy - 45);
+            gCtx.lineTo(cx + 20, cy - 55);
+            gCtx.lineTo(cx + 30, cy - 30);
+            gCtx.fill();
+
+            // Head / Face
+            gCtx.fillStyle = '#fde047';
+            gCtx.fillRect(cx - 20, cy - 30, 40, 30);
+
+            // Blindfold OR Glowing Six Eyes
+            if (gameState.gojo.blindfoldOn) {
+                gCtx.fillStyle = '#111827';
+                gCtx.fillRect(cx - 22, cy - 22, 44, 12);
+            } else {
+                // Glowing Blue Six Eyes
+                gCtx.fillStyle = '#38bdf8';
+                gCtx.shadowColor = '#0284c7';
+                gCtx.shadowBlur = 10;
+                gCtx.fillRect(cx - 14, cy - 20, 8, 8);
+                gCtx.fillRect(cx + 6, cy - 20, 8, 8);
+                gCtx.shadowBlur = 0;
+            }
+
+            // High-collar Jujutsu Jacket
+            gCtx.fillStyle = '#1e1b4b';
+            gCtx.fillRect(cx - 25, cy, 50, 45);
+            // Collar
+            gCtx.fillStyle = '#312e81';
+            gCtx.fillRect(cx - 15, cy - 5, 30, 10);
+
+            // Orbiting Blue (Lapse) and Red (Reversal) Orbs
+            if (gameState.gojo.phase >= 2) {
+                const orbDist = 60;
+                // Blue Orb
+                const bx = cx + Math.cos(animAngle * 2) * orbDist;
+                const by = cy + Math.sin(animAngle * 2) * orbDist;
+                gCtx.fillStyle = '#38bdf8';
+                gCtx.beginPath();
+                gCtx.arc(bx, by, 8, 0, Math.PI * 2);
+                gCtx.fill();
+
+                // Red Orb
+                const rx = cx + Math.cos(animAngle * 2 + Math.PI) * orbDist;
+                const ry = cy + Math.sin(animAngle * 2 + Math.PI) * orbDist;
+                gCtx.fillStyle = '#ef4444';
+                gCtx.beginPath();
+                gCtx.arc(rx, ry, 8, 0, Math.PI * 2);
+                gCtx.fill();
+            }
+
+            requestAnimationFrame(drawGojoSprite);
+        }
+
+        function drawBackground() {
+            bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+            
+            if (gameState.gojo.phase === 3) {
+                // Infinite Void Cosmic Grid Overlay
+                bgCtx.strokeStyle = 'rgba(168, 85, 247, 0.25)';
+                bgCtx.lineWidth = 1;
+                const step = 20;
+                for (let x = 0; x < bgCanvas.width; x += step) {
+                    bgCtx.beginPath(); bgCtx.moveTo(x, 0); bgCtx.lineTo(x, bgCanvas.height); bgCtx.stroke();
+                }
+                for (let y = 0; y < bgCanvas.height; y += step) {
+                    bgCtx.beginPath(); bgCtx.moveTo(0, y); bgCtx.lineTo(bgCanvas.width, y); bgCtx.stroke();
+                }
+            } else {
+                // Standard Ambient Floating Stars
+                bgCtx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+                for (let i = 0; i < 25; i++) {
+                    const sx = (Math.sin(i * 99 + animAngle * 0.5) * 0.5 + 0.5) * bgCanvas.width;
+                    const sy = (Math.cos(i * 33 + animAngle * 0.5) * 0.5 + 0.5) * bgCanvas.height;
+                    bgCtx.fillRect(sx, sy, 2, 2);
+                }
+            }
+            requestAnimationFrame(drawBackground);
+        }
+
+        /* ==========================================================================
+           5. TYPEWRITER & DIALOGUE SYSTEM
+           ========================================================================== */
+        function typeText(text, callback) {
+            clearInterval(gameState.typewriterTimer);
+            typewriterEl.innerHTML = '';
+            textPromptEl.classList.add('hidden');
+            let i = 0;
+
+            gameState.typewriterTimer = setInterval(() => {
+                if (i < text.length) {
+                    typewriterEl.innerHTML += text.charAt(i);
+                    if (text.charAt(i) !== ' ' && text.charAt(i) !== '\n') audio.playTextBlip();
+                    i++;
+                } else {
+                    clearInterval(gameState.typewriterTimer);
+                    if (callback) callback();
+                }
+            }, 22);
+        }
+
+        function showGojoSpeech(text, duration = 2200, callback) {
+            speechText.innerText = text;
+            speechBubble.classList.remove('hidden');
+            setTimeout(() => {
+                speechBubble.classList.add('hidden');
+                if (callback) callback();
+            }, duration);
+        }
+
+        function switchMode(mode) {
+            textModeEl.classList.add('hidden');
+            menuModeEl.classList.add('hidden');
+            fightModeEl.classList.add('hidden');
+            dodgeModeEl.classList.add('hidden');
+
+            if (mode === 'TEXT') textModeEl.classList.remove('hidden');
+            if (mode === 'MENU') menuModeEl.classList.remove('hidden');
+            if (mode === 'FIGHT') fightModeEl.classList.remove('hidden');
+            if (mode === 'DODGE') dodgeModeEl.classList.remove('hidden');
+        }
+
+        function updateHUD() {
+            const hpPct = Math.max(0, (gameState.player.hp / gameState.player.maxHp) * 100);
+            playerHpBar.style.width = `${hpPct}%`;
+            playerHpText.innerText = `${Math.max(0, gameState.player.hp)} / ${gameState.player.maxHp}`;
+
+            const gojoHpPct = Math.max(0, (gameState.gojo.hp / gameState.gojo.maxHp) * 100);
+            enemyHpBar.style.width = `${gojoHpPct}%`;
+            enemyHpText.innerText = `${Math.round(gojoHpPct)}%`;
+
+            // Phase Transitions
+            if (gameState.gojo.hp <= gameState.gojo.maxHp * 0.35 && gameState.gojo.phase < 3) {
+                gameState.gojo.phase = 3;
+                gameState.gojo.blindfoldOn = false;
+                phaseBadge.innerText = "PHASE 3: INFINITE VOID";
+                phaseBadge.className = "px-2 py-0.5 text-[9px] bg-purple-950 border border-purple-500 text-purple-200 rounded animate-pulse";
+                audio.playDomainSound();
+                showGojoSpeech("Domain Expansion: Infinite Void.");
+            } else if (gameState.gojo.hp <= gameState.gojo.maxHp * 0.7 && gameState.gojo.phase === 1) {
+                gameState.gojo.phase = 2;
+                gameState.gojo.blindfoldOn = false;
+                phaseBadge.innerText = "PHASE 2: SIX EYES";
+                phaseBadge.className = "px-2 py-0.5 text-[9px] bg-cyan-950 border border-cyan-400 text-cyan-200 rounded animate-pulse";
+                showGojoSpeech("Let me show you the Six Eyes.");
+            }
+
+            // Infinity Status
+            if (gameState.gojo.bypassTurns > 0) {
+                infinityState.innerText = `BYPASSED (${gameState.gojo.bypassTurns} TURN)`;
+                infinityState.className = "text-yellow-400 font-bold animate-pulse";
+            } else {
+                infinityState.innerText = "ACTIVE (90% DEF)";
+                infinityState.className = "text-green-400 font-bold";
+            }
+
+            mercyBar.style.width = `${gameState.gojo.mercy}%`;
+            if (gameState.gojo.mercy >= 100) {
+                btnMercy.classList.add('animate-pulse');
+            } else {
+                btnMercy.classList.remove('animate-pulse');
+            }
+        }
+
+        /* ==========================================================================
+           6. ACTION MENU HANDLERS (FIGHT, ACT, ITEM, MERCY)
+           ========================================================================== */
+        [btnFight, btnAct, btnItem, btnMercy].forEach(btn => {
+            btn.addEventListener('click', () => {
+                audio.init();
+                audio.startBGM();
+                audio.playSelect();
+                
+                [btnFight, btnAct, btnItem, btnMercy].forEach(b => b.querySelector('.heart-soul').classList.add('hidden'));
+                btn.querySelector('.heart-soul').classList.remove('hidden');
+
+                if (btn === btnFight) handleFightSelect();
+                if (btn === btnAct) handleActSelect();
+                if (btn === btnItem) handleItemSelect();
+                if (btn === btnMercy) handleMercySelect();
+            });
+        });
+
+        function handleFightSelect() {
+            switchMode('FIGHT');
+            let position = 0;
+            let direction = 1;
+
+            function animateCursor() {
+                position += 3.6 * direction;
+                if (position >= 96) direction = -1;
+                if (position <= 0) direction = 1;
+                attackCursorEl.style.left = position + '%';
+                gameState.attackAnimFrame = requestAnimationFrame(animateCursor);
+            }
+            animateCursor();
+
+            const triggerAttack = () => {
+                if (fightModeEl.classList.contains('hidden')) return;
+                window.removeEventListener('keydown', keyAttack);
+                fightModeEl.removeEventListener('click', triggerAttack);
+                cancelAnimationFrame(gameState.attackAnimFrame);
+
+                const distFromCenter = Math.abs(50 - position);
+                
+                // Strict colored target zone check (Must be inside 35% to 65% colored bar range)
+                if (distFromCenter > 15) {
+                    audio.playHurt();
+                    switchMode('TEXT');
+                    const randomTaunt = GOJO_MISS_QUOTES[Math.floor(Math.random() * GOJO_MISS_QUOTES.length)];
+                    showGojoSpeech(randomTaunt);
+                    typeText(`* Your attack missed completely! (0 damage)\n* Gojo laughs: "${randomTaunt}"`, () => {
+                        setTimeout(startGojoTurn, 1600);
+                    });
+                    return;
+                }
+
+                const isCritical = distFromCenter <= 2.5;
+                const accuracy = Math.max(0, 100 - distFromCenter * 2.2);
+
+                let baseDamage = Math.round((accuracy / 100) * (35 + gameState.player.atk)) + (isCritical ? 18 : 0);
+                
+                let hitMsg = "";
+                // Infinity Mitigation check
+                if (gameState.gojo.bypassTurns > 0) {
+                    hitMsg = isCritical 
+                        ? `* CRITICAL HIT! Infinity was bypassed. Dealt ${baseDamage} damage!` 
+                        : `* HIT! Infinity was successfully bypassed. Dealt ${baseDamage} damage!`;
+                    gameState.gojo.bypassTurns--;
+                } else {
+                    baseDamage = Math.max(1, Math.round(baseDamage * 0.1)); // 90% mitigation
+                    hitMsg = `* HIT! Dealt ${baseDamage} damage. (Limitless Infinity absorbed 90%)`;
+                }
+
+                audio.playHit(isCritical);
+                document.getElementById('gojo-canvas').classList.add('shake');
+                setTimeout(() => document.getElementById('gojo-canvas').classList.remove('shake'), 300);
+
+                gameState.gojo.hp -= baseDamage;
+
+                updateHUD();
+                switchMode('TEXT');
+
+                typeText(hitMsg, () => {
+                    setTimeout(checkBattleStatus, 1400);
+                });
+            };
+
+            const keyAttack = (e) => {
+                if (e.key === 'z' || e.key === 'Z') triggerAttack();
+            };
+
+            setTimeout(() => {
+                fightModeEl.addEventListener('click', triggerAttack);
+                window.addEventListener('keydown', keyAttack);
+            }, 100);
+        }
+
+        function handleActSelect() {
+            switchMode('MENU');
+            menuModeEl.innerHTML = GOJO_ACTS.map((act, i) => `
+                <button class="ut-btn p-2 text-left text-xs" onclick="executeAct(${i})">* ${act.name}</button>
+            `).join('');
+        }
+
+        window.executeAct = function(index) {
+            audio.playSelect();
+            const act = GOJO_ACTS[index];
+            switchMode('TEXT');
+
+            if (act.mercy) gameState.gojo.mercy = Math.min(100, gameState.gojo.mercy + act.mercy);
+            if (act.bypass) gameState.gojo.bypassTurns = act.bypass;
+            if (act.heal) gameState.player.hp = Math.min(gameState.player.maxHp, gameState.player.hp + act.heal);
+            if (act.quote) showGojoSpeech(act.quote);
+
+            updateHUD();
+            typeText(act.text, () => {
+                setTimeout(startGojoTurn, 1600);
+            });
+        };
+
+        function handleItemSelect() {
+            switchMode('MENU');
+            if (gameState.player.items.length === 0) {
+                menuModeEl.innerHTML = `<div class="col-span-2 text-gray-500 text-xs text-center pt-4">* (Inventory empty)</div>`;
+                setTimeout(() => switchMode('TEXT'), 1200);
+                return;
+            }
+
+            menuModeEl.innerHTML = gameState.player.items.map((item, idx) => `
+                <button class="ut-btn p-2 text-left text-xs" onclick="useItem(${idx})">* ${item.name}</button>
+            `).join('');
+        }
+
+        window.useItem = function(index) {
+            audio.playHeal();
+            const item = gameState.player.items.splice(index, 1)[0];
+            gameState.player.hp = Math.min(gameState.player.maxHp, gameState.player.hp + item.heal);
+            
+            if (item.name === 'Sukuna Finger') {
+                gameState.gojo.bypassTurns = 2;
+                showGojoSpeech("Sukuna's energy... Intersting!");
+            }
+
+            updateHUD();
+            switchMode('TEXT');
+            typeText(`* Used ${item.name}.\n* ${item.desc}`, () => {
+                setTimeout(startGojoTurn, 1600);
+            });
+        };
+
+        function handleMercySelect() {
+            switchMode('MENU');
+            const spareClass = gameState.gojo.mercy >= 100 ? 'text-yellow-400 font-bold' : 'text-gray-400';
+            menuModeEl.innerHTML = `
+                <button class="ut-btn p-2 text-left text-xs ${spareClass}" onclick="executeMercy('Spare')">* Spare</button>
+                <button class="ut-btn p-2 text-left text-xs" onclick="executeMercy('Flee')">* Escape</button>
+            `;
+        }
+
+        window.executeMercy = function(action) {
+            audio.playSelect();
+            switchMode('TEXT');
+
+            if (action === 'Spare') {
+                if (gameState.gojo.mercy >= 100) {
+                    showGojoSpeech("You're pretty cool, kid. Battle's over!");
+                    typeText(`* You spared Gojo Satoru!\n* VICTORY! You earned the Honored One's respect!`, () => {
+                        showEndGameScreen(true, "You defeated/spared Gojo and proved your Determination!");
+                    });
+                } else {
+                    typeText(`* Gojo is still enjoying the fight! Keep ACTing!`, () => {
+                        setTimeout(startGojoTurn, 1400);
+                    });
+                }
+            } else if (action === 'Flee') {
+                showGojoSpeech("Nobody escapes the Six Eyes!");
+                typeText(`* Gojo teleported right in front of you! You can't escape!`, () => {
+                    setTimeout(startGojoTurn, 1400);
+                });
+            }
+        };
+
+        /* ==========================================================================
+           7. BULLET HELL ENGINE (BLUE, RED, HOLLOW PURPLE & INFINITE VOID)
+           ========================================================================== */
+        function checkBattleStatus() {
+            if (gameState.gojo.hp <= 0) {
+                showGojoSpeech("Impossible... You truly are strong.");
+                typeText(`* Gojo Satoru was defeated!\n* YOU WON THE HONORED BATTLE!`, () => {
+                    showEndGameScreen(true, "You stood against the Strongest Jujutsu Sorcerer and won!");
+                });
+            } else {
+                startGojoTurn();
+            }
+        }
+
+        function startGojoTurn() {
+            switchMode('DODGE');
+            bulletCanvas.width = dodgeBox.clientWidth;
+            bulletCanvas.height = dodgeBox.clientHeight;
+
+            gameState.soulPos = { x: bulletCanvas.width / 2, y: bulletCanvas.height / 2 };
+            updateSoulDOM();
+
+            gameState.activeBullets = [];
+            const center = { x: bulletCanvas.width / 2, y: bulletCanvas.height / 2 };
+
+            // Pattern Selection based on Gojo's Phase
+            if (gameState.gojo.phase === 1) {
+                // Phase 1: Blue Lapse (Pull to Center) & Cyan Orbs
+                for (let i = 0; i < 14; i++) {
+                    gameState.activeBullets.push({
+                        type: 'blueLapse',
+                        x: Math.random() * bulletCanvas.width,
+                        y: -15 - (i * 20),
+                        vx: (Math.random() - 0.5) * 1.2,
+                        vy: 2.0,
+                        radius: 5,
+                        color: i % 2 === 0 ? '#67e8f9' : '#38bdf8', // Cyan vs Blue
+                        mechanic: i % 2 === 0 ? 'CYAN' : 'PULL'
+                    });
+                }
+            } else if (gameState.gojo.phase === 2) {
+                // Phase 2: Red Reversal Shockwaves & Orange Orbs
+                for (let i = 0; i < 18; i++) {
+                    gameState.activeBullets.push({
+                        type: 'redBlast',
+                        x: Math.random() * bulletCanvas.width,
+                        y: -15 - (i * 18),
+                        vx: (Math.random() - 0.5) * 1.5,
+                        vy: 2.5,
+                        radius: 6,
+                        color: i % 3 === 0 ? '#fb923c' : '#ef4444',
+                        mechanic: i % 3 === 0 ? 'ORANGE' : 'PUSH'
+                    });
+                }
+            } else {
+                // Phase 3: Hollow Purple & Infinite Void Rapid Attack
+                for (let i = 0; i < 24; i++) {
+                    gameState.activeBullets.push({
+                        type: 'hollowPurple',
+                        x: Math.random() * bulletCanvas.width,
+                        y: -20 - (i * 16),
+                        vx: (Math.random() - 0.5) * 2.0,
+                        vy: 3.0,
+                        radius: 7,
+                        color: '#a855f7',
+                        mechanic: 'NORMAL'
+                    });
+                }
+            }
+
+            const startTime = Date.now();
+            const dodgeDuration = 6500 + gameState.gojo.phase * 500;
+
+            function dodgeLoop() {
+                let isMoving = false;
+
+                // Soul Movement logic with WASD / Arrow Keys
+                if (gameState.keys.ArrowUp || gameState.keys.w) { gameState.soulPos.y -= gameState.soulSpeed; isMoving = true; }
+                if (gameState.keys.ArrowDown || gameState.keys.s) { gameState.soulPos.y += gameState.soulSpeed; isMoving = true; }
+                if (gameState.keys.ArrowLeft || gameState.keys.a) { gameState.soulPos.x -= gameState.soulSpeed; isMoving = true; }
+                if (gameState.keys.ArrowRight || gameState.keys.d) { gameState.soulPos.x += gameState.soulSpeed; isMoving = true; }
+
+                // Apply Cursed Technique Forces (Blue pull or Red push)
+                if (gameState.gojo.phase === 1) {
+                    // Blue Gravitational Pull toward center
+                    const dx = center.x - gameState.soulPos.x;
+                    const dy = center.y - gameState.soulPos.y;
+                    gameState.soulPos.x += dx * 0.015;
+                    gameState.soulPos.y += dy * 0.015;
+                } else if (gameState.gojo.phase === 2) {
+                    // Red Repulsive Push away from center
+                    const dx = gameState.soulPos.x - center.x;
+                    const dy = gameState.soulPos.y - center.y;
+                    const dist = Math.hypot(dx, dy) || 1;
+                    gameState.soulPos.x += (dx / dist) * 0.4;
+                    gameState.soulPos.y += (dy / dist) * 0.4;
+                }
+
+                // Strict Border Collision Math (Zero Out-of-Bounds Glitching)
+                gameState.soulPos.x = Math.max(8, Math.min(bulletCanvas.width - 8, gameState.soulPos.x));
+                gameState.soulPos.y = Math.max(8, Math.min(bulletCanvas.height - 8, gameState.soulPos.y));
+                updateSoulDOM();
+
+                bCtx.clearRect(0, 0, bulletCanvas.width, bulletCanvas.height);
+
+                // Render & Update Bullets
+                for (let i = 0; i < gameState.activeBullets.length; i++) {
+                    let b = gameState.activeBullets[i];
+                    b.x += b.vx;
+                    b.y += b.vy;
+
+                    bCtx.fillStyle = b.color;
+                    bCtx.beginPath();
+                    bCtx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+                    bCtx.fill();
+
+                    // Collision Check
+                    const dist = Math.hypot(b.x - gameState.soulPos.x, b.y - gameState.soulPos.y);
+                    if (dist < b.radius + 6) {
+                        checkSoulHit(b.mechanic, isMoving);
+                        b.y = bulletCanvas.height + 100; // Remove bullet
+                    }
+                }
+
+                if (Date.now() - startTime < dodgeDuration && gameState.player.hp > 0) {
+                    requestAnimationFrame(dodgeLoop);
+                } else if (gameState.player.hp > 0) {
+                    switchMode('TEXT');
+                    typeText(`* Gojo relaxes his posture for a moment.`);
+                }
+            }
+
+            dodgeLoop();
+        }
+
+        let invulnerable = false;
+        function checkSoulHit(mechanic, isMoving) {
+            if (invulnerable) return;
+
+            // Cyan = stay still to bypass, Orange = must be moving to bypass
+            if (mechanic === 'CYAN' && !isMoving) return;
+            if (mechanic === 'ORANGE' && isMoving) return;
+
+            invulnerable = true;
+            audio.playHurt();
+            
+            const rawDamage = Math.max(4, 18 - gameState.player.def);
+            gameState.player.hp -= rawDamage;
+            updateHUD();
+
+            document.getElementById('game-container').classList.add('shake');
+            setTimeout(() => document.getElementById('game-container').classList.remove('shake'), 250);
+            setTimeout(() => { invulnerable = false; }, 550);
+
+            if (gameState.player.hp <= 0) {
+                showEndGameScreen(false, "Your soul fragmented inside Gojo's Infinite Void...");
+            }
+        }
+
+        function updateSoulDOM() {
+            playerSoul.style.left = `${gameState.soulPos.x}px`;
+            playerSoul.style.top = `${gameState.soulPos.y}px`;
+        }
+
+        // Controls
+        window.addEventListener('keydown', (e) => { if (gameState.keys.hasOwnProperty(e.key)) gameState.keys[e.key] = true; });
+        window.addEventListener('keyup', (e) => { if (gameState.keys.hasOwnProperty(e.key)) gameState.keys[e.key] = false; });
+
+        const touchBtns = { 'btn-up': 'ArrowUp', 'btn-down': 'ArrowDown', 'btn-left': 'ArrowLeft', 'btn-right': 'ArrowRight' };
+        Object.entries(touchBtns).forEach(([btnId, keyName]) => {
+            const btn = document.getElementById(btnId);
+            btn.addEventListener('touchstart', (e) => { e.preventDefault(); gameState.keys[keyName] = true; });
+            btn.addEventListener('touchend', (e) => { e.preventDefault(); gameState.keys[keyName] = false; });
+        });
+
+        function showEndGameScreen(isWin, message) {
+            audio.stopBGM();
+            overlayScreen.classList.remove('hidden');
+            document.getElementById('overlay-title').innerText = isWin ? "VICTORY!" : "GAME OVER";
+            document.getElementById('overlay-title').className = `text-2xl sm:text-4xl mb-4 font-bold tracking-widest ${isWin ? 'text-yellow-400' : 'text-red-600'}`;
+            document.getElementById('overlay-desc').innerText = message;
+        }
+
+        document.getElementById('btn-restart').addEventListener('click', () => {
+            gameState.player.hp = gameState.player.maxHp;
+            gameState.gojo.hp = gameState.gojo.maxHp;
+            gameState.gojo.phase = 1;
+            gameState.gojo.mercy = 0;
+            gameState.gojo.bypassTurns = 0;
+            gameState.gojo.blindfoldOn = true;
+            
+            overlayScreen.classList.add('hidden');
+            updateHUD();
+            switchMode('TEXT');
+            typeText(`* Battle restarted against Gojo Satoru!\n* Prepare yourself!`);
+        });
+
+        window.onload = function() {
+            initCanvases();
+            drawGojoSprite();
+            drawBackground();
+            updateHUD();
+            typeText(`* Gojo Satoru floats gracefully in front of you.\n* "Nah, I'd win."`);
+        };
+
+        window.onresize = function() {
+            initCanvases();
+        };
+    </script>
+</body>
+</html>
